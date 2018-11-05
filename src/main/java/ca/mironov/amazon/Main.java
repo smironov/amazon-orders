@@ -34,7 +34,7 @@ public class Main {
                 "computers", new DirectoryOrdersFindService(ordersDir.resolve("computers")),
                 "books", new DirectoryOrdersFindService(ordersDir.resolve("books"))
         );
-        OrderParser orderParser = new PDFOrderParser();
+        OrderParser orderParser = new RegexPDFOrderParser();
         ReportGenerator reportGenerator = new CsvReportGenerator(Path.of("reports"));
         new Main(ordersFindServiceMap, orderParser, reportGenerator).run();
     }
