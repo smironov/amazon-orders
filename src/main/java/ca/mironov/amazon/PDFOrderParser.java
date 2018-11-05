@@ -62,7 +62,7 @@ public class PDFOrderParser implements OrderParser {
         BigDecimal shippingAndHandling = new BigDecimal(values[2]);
         BigDecimal hst = new BigDecimal(values[5]);
         BigDecimal total = new BigDecimal(values[8]);
-        return new Order(id, totalBeforeTax, shippingAndHandling, hst, total);
+        return new Order(id, null /* todo */, totalBeforeTax, shippingAndHandling, hst, total);
     }
 
 }

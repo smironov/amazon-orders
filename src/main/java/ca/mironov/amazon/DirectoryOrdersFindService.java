@@ -16,15 +16,19 @@ public class DirectoryOrdersFindService implements OrdersFindService {
     @Override
     public List<Path> findOrderFiles() {
         try {
-            try (Stream<Path> list = Files.list(directory)) {
-                return list
-                        .filter(path -> Files.isRegularFile(path))
-                        .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".pdf"))
-                        .sorted()
-                        .collect(Collectors.toList());
+            try (Stream<Path> list = Files.list(directory).filter(Files::isRegularFile)) {
+                return list.map(DirectoryOrdersFindService::validatePDFExtension).sorted().collect(Collectors.toList());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static Path validatePDFExtension(Path file) {
+        if (file.getFileName().toString().toLowerCase().endsWith(".pdf")) {
+            return file;
+        } else {
+            throw new IllegalArgumentException("unsupported invoice found: " + file);
         }
     }
 

@@ -10,7 +10,7 @@ public class CsvReportGenerator implements ReportGenerator {
 
     private final Path directory;
 
-    public CsvReportGenerator(Path directory) {
+    CsvReportGenerator(Path directory) {
         this.directory = directory;
     }
 
@@ -22,9 +22,11 @@ public class CsvReportGenerator implements ReportGenerator {
             }
             Path reportFile = directory.resolve(reportName + ".csv");
             try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(reportFile), CSVFormat.EXCEL)) {
-                csvPrinter.printRecord("ORDER NUM", "TOTAL"); // print headers
+                // print headers
+                csvPrinter.printRecord("Order #", "Total before tax", "Shipping & handling", "HST", "Total");
                 for (Order order : orders) {
-                    csvPrinter.printRecord(order.getId(), order.getTotal());
+                    csvPrinter.printRecord(order.getId(), order.getTotalBeforeTax(), order.getShippingAndHandling(),
+                            order.getHst(), order.getTotal());
                 }
             }
         } catch (IOException e) {

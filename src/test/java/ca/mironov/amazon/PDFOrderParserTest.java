@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.*;
+import java.time.*;
 
 import static org.junit.Assert.*;
 
@@ -21,7 +22,7 @@ public class PDFOrderParserTest {
         String text = Files.readString(Paths.get(
                 "src", "test", "resources", "Amazon.com - Order 701-2903767-7852238.txt"));
         Order order = PDFOrderParser.parseText(text);
-        assertEquals(new Order("701-2903767-7852238", new BigDecimal("67.37"),
+        assertEquals(new Order("701-2903767-7852238", LocalDate.of(1978, Month.APRIL, 18), new BigDecimal("67.37"),
                 new BigDecimal("0.00"), new BigDecimal("3.37"), new BigDecimal("70.74")), order);
     }
 

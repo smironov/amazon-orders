@@ -9,13 +9,20 @@ import java.time.*;
 
 import static org.junit.Assert.assertEquals;
 
-public class RegexPDFOrderParserTest {
+public class KeyPDFOrderParserTest {
 
     @Test
     public void testParse() {
-        Order order = new RegexPDFOrderParser().parse(Path.of(
-                "orders", "computers", "Amazon.com - Order 701-2903767-7852238.pdf"));
-        assertEquals("701-2903767-7852238", order.getId());
+        Order order = new KeyPDFOrderParser().parse(Path.of(
+                "src", "test", "resources", "Amazon.com - Order 701-7426366-1013047.pdf"));
+        assertEquals(new Order(
+                "701-7426366-1013047",
+                LocalDate.of(2018, Month.FEBRUARY, 20),
+                new BigDecimal("56.19"),
+                new BigDecimal("0.00"),
+                new BigDecimal("2.81"),
+                new BigDecimal("59.00")
+        ), order);
     }
 
     @Test
