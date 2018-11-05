@@ -23,10 +23,11 @@ public class CsvReportGenerator implements ReportGenerator {
             Path reportFile = directory.resolve(reportName + ".csv");
             try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(reportFile), CSVFormat.EXCEL)) {
                 // print headers
-                csvPrinter.printRecord("Order #", "Total before tax", "Shipping & handling", "HST", "Total");
+                csvPrinter.printRecord("Order #", "Items subtotal", "Shipping & handling", "Environmental handling fee", "Total before tax", "HST", "Total", "Items");
                 for (Order order : orders) {
-                    csvPrinter.printRecord(order.getId(), order.getTotalBeforeTax(), order.getShippingAndHandling(),
-                            order.getHst(), order.getTotal());
+                    csvPrinter.printRecord(order.getId(),
+                            order.getItemsSubtotal(), order.getShippingAndHandling(), order.getEnvironmentalHandlingFee(),
+                            order.getTotalBeforeTax(), order.getHst(), order.getTotal(), order.getItems());
                 }
             }
         } catch (IOException e) {
