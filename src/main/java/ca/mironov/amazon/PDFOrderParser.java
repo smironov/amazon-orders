@@ -12,7 +12,7 @@ import java.util.stream.*;
 public class PDFOrderParser implements OrderParser {
 
     @Override
-    public Order parse(Path file) throws IOException {
+    public Order parse(Path file) {
         try (InputStream in = Files.newInputStream(file)) {
             try (PDDocument document = PDDocument.load(in)) {
                 if (document.isEncrypted()) {
@@ -22,6 +22,8 @@ public class PDFOrderParser implements OrderParser {
                 String text = stripper.getText(document);
                 return parseText(text);
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -42,17 +44,17 @@ public class PDFOrderParser implements OrderParser {
     ).map(Pattern::compile).collect(Collectors.toList()).toArray(Pattern[]::new);
 
     protected static Order parseText(String text) {
-        String[] lines = text.split("\n");
+        String[] lines = text.split("\r\n");
         String[] values = new String[INVOICE_TEXT_PATTERNS.length];
         for (int i = 0; i < INVOICE_TEXT_PATTERNS.length; i++) {
             Pattern pattern = INVOICE_TEXT_PATTERNS[i];
-            String line = lines[i];
+            String line = lines[i].stripTrailing();
             Matcher matcher = pattern.matcher(line);
             if (matcher.matches()) {
                 values[i] = (matcher.groupCount() > 0) ? matcher.group(1) : null;
             } else {
-                throw new IllegalArgumentException(String.format(
-                        "invalid invoice line #%d: '%s', expected '%s'", 1 + i, line, pattern));
+                throw new IllegalArgumentException(
+                        "invalid invoice line #" + (1 + i) + ": '" + line + "', expected '" + pattern + "'");
             }
         }
         String id = values[11];
