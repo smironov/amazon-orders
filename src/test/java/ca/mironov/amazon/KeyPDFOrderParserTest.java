@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.time.*;
 
 import static org.junit.Assert.assertEquals;
@@ -12,12 +12,13 @@ import static org.junit.Assert.assertEquals;
 public class KeyPDFOrderParserTest {
 
     @Test
-    public void testParse() {
+    public void testParse() throws IOException {
         Order order = new KeyPDFOrderParser().parse(Path.of(
                 "src", "test", "resources", "Amazon.com - Order 701-7426366-1013047.pdf"));
         assertEquals(new Order(
                 "701-7426366-1013047", LocalDate.of(2018, Month.FEBRUARY, 20),
                 new BigDecimal("56.19"),
+                new BigDecimal("0.00"),
                 new BigDecimal("0.00"),
                 new BigDecimal("0.00"),
                 new BigDecimal("56.19"),

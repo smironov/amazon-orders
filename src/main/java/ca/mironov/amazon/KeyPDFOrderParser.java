@@ -19,8 +19,8 @@ public class KeyPDFOrderParser implements OrderParser {
     private static final Logger logger = LoggerFactory.getLogger(KeyPDFOrderParser.class);
 
     @Override
-    public Order parse(Path file) {
-        logger.trace("parsing file: {}", file);
+    public Order parse(Path file) throws IOException {
+        logger.debug("parsing file: {}", file);
         try (InputStream in = Files.newInputStream(file)) {
             try (PDDocument document = PDDocument.load(in)) {
                 if (document.isEncrypted()) {
@@ -30,8 +30,6 @@ public class KeyPDFOrderParser implements OrderParser {
                 String text = stripper.getText(document);
                 return parseText(text);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -41,19 +39,22 @@ public class KeyPDFOrderParser implements OrderParser {
             Pattern.compile("(?<k>Item\\(s\\) Subtotal):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Total before tax):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Shipping & Handling):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Your Coupon Savings):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Lightning Deal):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Environmental Handling Fee) \\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Free Shipping):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Estimated GST/HST):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Gift Card Amount):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Grand Total):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Grand Total):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})(?:Canada)?"), // Canada for workaround
     };
 
-    static Order parseText(String text) {
-        SortedSet<String> lines = new TreeSet<>(Stream.of(text.split("\r\n"))
+    private static Order parseText(String text) {
+        //noinspection DynamicRegexReplaceableByCompiledPattern,HardcodedLineSeparator
+        SortedSet<String> lines = Stream.of(text.split("\r\n"))
                 .filter(line -> !line.isBlank())
-                .sorted()
-                .collect(Collectors.toList()));
+                .sorted().collect(Collectors.toCollection(TreeSet::new));
         Multimap<String, String> multimap = LinkedListMultimap.create();
+        lines.stream().filter(line -> line.contains("Grand")).forEach(logger::trace);
         lines.forEach(line -> Stream.of(PATTERNS)
                 .map(pattern -> pattern.matcher(line))
                 .filter(Matcher::matches)
@@ -69,7 +70,13 @@ public class KeyPDFOrderParser implements OrderParser {
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal shippingAndHandling = multimap.get("Shipping & Handling").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
-        BigDecimal environmentalHandlingFee = ListUtils.getSingle(multimap.get("Environmental Handling Fee").stream().map(BigDecimal::new).collect(Collectors.toList())).orElse(new BigDecimal("0.00"));
+        BigDecimal yourCouponSavings = multimap.get("Your Coupon Savings").stream().map(BigDecimal::new)
+                .max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+        BigDecimal lightningDeal = multimap.get("Lightning Deal").stream().map(BigDecimal::new)
+                .max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+        BigDecimal discount = yourCouponSavings.add(lightningDeal);
+        BigDecimal environmentalHandlingFee = ListUtils.getSingle(multimap.get("Environmental Handling Fee").stream()
+                .map(BigDecimal::new).collect(Collectors.toList())).orElse(new BigDecimal("0.00"));
         Optional<BigDecimal> freeShipping = ListUtils.getSingle(multimap.get("Free Shipping").stream().map(BigDecimal::new)
                 .collect(Collectors.toList()));
         if (freeShipping.isPresent() && (shippingAndHandling.compareTo(freeShipping.get()) == 0)) {
@@ -80,8 +87,9 @@ public class KeyPDFOrderParser implements OrderParser {
         BigDecimal hst = multimap.get("Estimated GST/HST").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal total = multimap.get("Grand Total").stream().map(BigDecimal::new)
-                .max(Comparator.naturalOrder()).orElseThrow();
-        Optional<BigDecimal> giftCardAmount = ListUtils.getSingle(ListUtils.filterDuplicates(multimap.get("Gift Card Amount")).stream().map(BigDecimal::new).collect(Collectors.toList()));
+                .max(Comparator.naturalOrder()).orElseThrow(() -> new IllegalArgumentException("Grand Total not present"));
+        Optional<BigDecimal> giftCardAmount = ListUtils.getSingle(ListUtils.filterDuplicates(multimap.get("Gift Card Amount")).stream()
+                .map(BigDecimal::new).collect(Collectors.toList()));
         if (giftCardAmount.isPresent()) {
             total = total.add(giftCardAmount.get());
         }
@@ -89,11 +97,7 @@ public class KeyPDFOrderParser implements OrderParser {
                 .filter(line -> line.contains(" of: "))
                 .map(line -> line.startsWith("1 of: ") ? line.substring("1 of: ".length()) : line)
                 .collect(Collectors.joining("; "));
-        try {
-            return new Order(id, date, itemsSubtotal, shippingAndHandling, environmentalHandlingFee, totalBeforeTax, hst, total, items);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return new Order(id, date, itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, hst, total, items);
     }
 
 }

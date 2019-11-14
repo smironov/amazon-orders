@@ -1,111 +1,91 @@
 package ca.mironov.amazon;
 
+import org.slf4j.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Objects;
 
-public class Order {
+@SuppressWarnings("ClassWithTooManyFields")
+class Order {
+
+    private static final Logger logger = LoggerFactory.getLogger(Order.class);
 
     private final String id;
     private final LocalDate date;
     private final BigDecimal itemsSubtotal;
     private final BigDecimal shippingAndHandling;
+    private final BigDecimal discount;
     private final BigDecimal environmentalHandlingFee;
     private final BigDecimal totalBeforeTax;
     private final BigDecimal hst;
     private final BigDecimal total;
     private final String items;
 
-    public Order(String id, LocalDate date,
-                 BigDecimal itemsSubtotal, BigDecimal shippingAndHandling, BigDecimal environmentalHandlingFee,
-                 BigDecimal totalBeforeTax, BigDecimal hst, BigDecimal total, String items) {
+    @SuppressWarnings("ConstructorWithTooManyParameters")
+    Order(String id, LocalDate date,
+          BigDecimal itemsSubtotal, BigDecimal shippingAndHandling, BigDecimal discount, BigDecimal environmentalHandlingFee,
+          BigDecimal totalBeforeTax, BigDecimal hst, BigDecimal total, String items) {
         this.id = id;
         this.date = date;
         this.itemsSubtotal = itemsSubtotal;
         this.shippingAndHandling = shippingAndHandling;
+        this.discount = discount;
         this.environmentalHandlingFee = environmentalHandlingFee;
         this.totalBeforeTax = totalBeforeTax;
         this.hst = hst;
         this.total = total;
         this.items = items;
-        if (itemsSubtotal.add(shippingAndHandling).add(environmentalHandlingFee).compareTo(totalBeforeTax) != 0) {
-            throw new IllegalArgumentException("itemsSubtotal + shippingAndHandling != totalBeforeTax: " + this);
+        if (itemsSubtotal.subtract(discount).add(shippingAndHandling).add(environmentalHandlingFee).compareTo(totalBeforeTax) != 0) {
+            logger.error("Order {}: itemsSubtotal {} - discount {} + shippingAndHandling {} + environmentalHandlingFee {} != totalBeforeTax {}, diff={}",
+                    id, itemsSubtotal, discount, shippingAndHandling, environmentalHandlingFee, totalBeforeTax,
+                    totalBeforeTax.subtract(itemsSubtotal.subtract(discount).add(shippingAndHandling).add(environmentalHandlingFee)));
+            throw new IllegalArgumentException("itemsSubtotal - discount + shippingAndHandling + environmentalHandlingFee != totalBeforeTax: " + this);
         }
         if (totalBeforeTax.add(hst).compareTo(total) != 0) {
+            logger.error("Order {}: totalBeforeTax {} + hst {} != total {}, diff={}", id, totalBeforeTax, hst, total, total.subtract(totalBeforeTax.add(hst)));
             throw new IllegalArgumentException("totalBeforeTax + hst != total: " + this);
         }
     }
 
-    public String getId() {
+    String getId() {
         return id;
     }
 
-    public LocalDate getDate() {
+    LocalDate getDate() {
         return date;
     }
 
-    public BigDecimal getItemsSubtotal() {
+    BigDecimal getItemsSubtotal() {
         return itemsSubtotal;
     }
 
-    public BigDecimal getShippingAndHandling() {
+    BigDecimal getShippingAndHandling() {
         return shippingAndHandling;
     }
 
-    public BigDecimal getEnvironmentalHandlingFee() {
+    BigDecimal getDiscount() {
+        return discount;
+    }
+
+    BigDecimal getEnvironmentalHandlingFee() {
         return environmentalHandlingFee;
     }
 
-    public BigDecimal getTotalBeforeTax() {
+    BigDecimal getTotalBeforeTax() {
         return totalBeforeTax;
     }
 
-    public BigDecimal getHst() {
+    BigDecimal getHst() {
         return hst;
     }
 
-    public BigDecimal getTotal() {
+    BigDecimal getTotal() {
         return total;
     }
 
-    public String getItems() {
+    String getItems() {
         return items;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Order order = (Order) o;
-        return Objects.equals(id, order.id) &&
-                Objects.equals(date, order.date) &&
-                Objects.equals(itemsSubtotal, order.itemsSubtotal) &&
-                Objects.equals(shippingAndHandling, order.shippingAndHandling) &&
-                Objects.equals(environmentalHandlingFee, order.environmentalHandlingFee) &&
-                Objects.equals(totalBeforeTax, order.totalBeforeTax) &&
-                Objects.equals(hst, order.hst) &&
-                Objects.equals(total, order.total) &&
-                Objects.equals(items, order.items);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, date, itemsSubtotal, shippingAndHandling, environmentalHandlingFee, totalBeforeTax, hst, total, items);
-    }
-
-    @Override
-    public String toString() {
-        return "Order{" +
-                "id='" + id + '\'' +
-                ", date=" + date +
-                ", itemsSubtotal=" + itemsSubtotal +
-                ", shippingAndHandling=" + shippingAndHandling +
-                ", environmentalHandlingFee=" + environmentalHandlingFee +
-                ", totalBeforeTax=" + totalBeforeTax +
-                ", hst=" + hst +
-                ", total=" + total +
-                ", items='" + items + '\'' +
-                '}';
-    }
 
 }
