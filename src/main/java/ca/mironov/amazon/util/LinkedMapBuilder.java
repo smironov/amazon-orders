@@ -2,9 +2,10 @@ package ca.mironov.amazon.util;
 
 import java.util.*;
 
-public class MapBuilder {
+@SuppressWarnings("UtilityClass")
+public final class LinkedMapBuilder {
 
-    private MapBuilder() {
+    private LinkedMapBuilder() {
     }
 
     @SuppressWarnings("MethodWithTooManyParameters")

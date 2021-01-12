@@ -1,30 +1,33 @@
 package ca.mironov.amazon;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.StringJoiner;
 
 @SuppressWarnings("ClassWithTooManyFields")
 class Order {
 
     private static final Logger logger = LoggerFactory.getLogger(Order.class);
 
-    private final String id;
-    private final LocalDate date;
-    private final BigDecimal itemsSubtotal;
-    private final BigDecimal shippingAndHandling;
-    private final BigDecimal discount;
-    private final BigDecimal environmentalHandlingFee;
-    private final BigDecimal totalBeforeTax;
-    private final BigDecimal hst;
-    private final BigDecimal total;
-    private final String items;
+    private final @NotNull String id;
+    private final @NotNull LocalDate date;
+    private final @NotNull BigDecimal itemsSubtotal;
+    private final @NotNull BigDecimal shippingAndHandling;
+    private final @NotNull BigDecimal discount;
+    private final @NotNull BigDecimal environmentalHandlingFee;
+    private final @NotNull BigDecimal totalBeforeTax;
+    private final @NotNull BigDecimal hst;
+    private final @NotNull BigDecimal total;
+    private final @NotNull String items;
 
     @SuppressWarnings("ConstructorWithTooManyParameters")
-    Order(String id, LocalDate date,
-          BigDecimal itemsSubtotal, BigDecimal shippingAndHandling, BigDecimal discount, BigDecimal environmentalHandlingFee,
-          BigDecimal totalBeforeTax, BigDecimal hst, BigDecimal total, String items) {
+    Order(@NotNull String id, @NotNull LocalDate date,
+          @NotNull BigDecimal itemsSubtotal, @NotNull BigDecimal shippingAndHandling, @NotNull BigDecimal discount,
+          @NotNull BigDecimal environmentalHandlingFee,
+          @NotNull BigDecimal totalBeforeTax, @NotNull BigDecimal hst, @NotNull BigDecimal total, @NotNull String items) {
         this.id = id;
         this.date = date;
         this.itemsSubtotal = itemsSubtotal;
@@ -47,45 +50,95 @@ class Order {
         }
     }
 
-    String getId() {
+    @NotNull String getId() {
         return id;
     }
 
-    LocalDate getDate() {
+    @NotNull LocalDate getDate() {
         return date;
     }
 
-    BigDecimal getItemsSubtotal() {
+    @NotNull BigDecimal getItemsSubtotal() {
         return itemsSubtotal;
     }
 
-    BigDecimal getShippingAndHandling() {
+    @NotNull BigDecimal getShippingAndHandling() {
         return shippingAndHandling;
     }
 
-    BigDecimal getDiscount() {
+    @NotNull BigDecimal getDiscount() {
         return discount;
     }
 
-    BigDecimal getEnvironmentalHandlingFee() {
+    @NotNull BigDecimal getEnvironmentalHandlingFee() {
         return environmentalHandlingFee;
     }
 
-    BigDecimal getTotalBeforeTax() {
+    @NotNull BigDecimal getTotalBeforeTax() {
         return totalBeforeTax;
     }
 
-    BigDecimal getHst() {
+    @NotNull BigDecimal getHst() {
         return hst;
     }
 
-    BigDecimal getTotal() {
+    @NotNull BigDecimal getTotal() {
         return total;
     }
 
-    String getItems() {
+    @NotNull String getItems() {
         return items;
     }
 
+    @SuppressWarnings("all")
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Order order = (Order) o;
+
+        if (!id.equals(order.id)) return false;
+        if (!date.equals(order.date)) return false;
+        if (!itemsSubtotal.equals(order.itemsSubtotal)) return false;
+        if (!shippingAndHandling.equals(order.shippingAndHandling)) return false;
+        if (!discount.equals(order.discount)) return false;
+        if (!environmentalHandlingFee.equals(order.environmentalHandlingFee)) return false;
+        if (!totalBeforeTax.equals(order.totalBeforeTax)) return false;
+        if (!hst.equals(order.hst)) return false;
+        if (!total.equals(order.total)) return false;
+        return items.equals(order.items);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + date.hashCode();
+        result = 31 * result + itemsSubtotal.hashCode();
+        result = 31 * result + shippingAndHandling.hashCode();
+        result = 31 * result + discount.hashCode();
+        result = 31 * result + environmentalHandlingFee.hashCode();
+        result = 31 * result + totalBeforeTax.hashCode();
+        result = 31 * result + hst.hashCode();
+        result = 31 * result + total.hashCode();
+        result = 31 * result + items.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", Order.class.getSimpleName() + "[", "]")
+                .add("id='" + id + "'")
+                .add("date=" + date)
+                .add("itemsSubtotal=" + itemsSubtotal)
+                .add("shippingAndHandling=" + shippingAndHandling)
+                .add("discount=" + discount)
+                .add("environmentalHandlingFee=" + environmentalHandlingFee)
+                .add("totalBeforeTax=" + totalBeforeTax)
+                .add("hst=" + hst)
+                .add("total=" + total)
+                .add("items='" + items + "'")
+                .toString();
+    }
 
 }

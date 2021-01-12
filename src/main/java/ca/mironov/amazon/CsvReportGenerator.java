@@ -23,7 +23,7 @@ public class CsvReportGenerator implements ReportGenerator {
         Path reportFile = directory.resolve(reportName + ".csv");
         try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(reportFile), CSVFormat.EXCEL)) {
             // print headers
-            csvPrinter.printRecord("Order #",
+            csvPrinter.printRecord("Date", "Order #",
                     "Items subtotal with discount", "Shipping & handling", "Environmental handling fee", "Total before tax", "HST", "Total", "Items");
             BigDecimal totalItemsSubtotalWithDiscount = BigDecimal.ZERO;
             BigDecimal totalShippingAndHandling = BigDecimal.ZERO;
@@ -32,7 +32,7 @@ public class CsvReportGenerator implements ReportGenerator {
             BigDecimal totalHst = BigDecimal.ZERO;
             BigDecimal totalTotal = BigDecimal.ZERO;
             for (Order order : orders) {
-                csvPrinter.printRecord(order.getId(),
+                csvPrinter.printRecord(order.getDate(), order.getId(),
                         order.getItemsSubtotal().subtract(order.getDiscount()), order.getShippingAndHandling(), order.getEnvironmentalHandlingFee(),
                         order.getTotalBeforeTax(), order.getHst(), order.getTotal(), order.getItems());
                 totalItemsSubtotalWithDiscount = totalItemsSubtotalWithDiscount.add(order.getItemsSubtotal()).subtract(order.getDiscount());
@@ -45,7 +45,7 @@ public class CsvReportGenerator implements ReportGenerator {
             // print total
             csvPrinter.printRecord();
             csvPrinter.printRecord(
-                    "Total:", totalItemsSubtotalWithDiscount, totalShippingAndHandling, totalEnvironmentalHandlingFee,
+                    null, "Total:", totalItemsSubtotalWithDiscount, totalShippingAndHandling, totalEnvironmentalHandlingFee,
                     totalTotalBeforeTax, totalHst, totalTotal
             );
         }

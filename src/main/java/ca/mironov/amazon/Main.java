@@ -1,6 +1,6 @@
 package ca.mironov.amazon;
 
-import ca.mironov.amazon.util.MapBuilder;
+import ca.mironov.amazon.util.LinkedMapBuilder;
 import org.apache.commons.cli.*;
 import org.slf4j.*;
 
@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Main {
+public final class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
@@ -59,7 +59,7 @@ public class Main {
             String outputDir = Objects.requireNonNull(
                     commandLine.getOptionValue(OUTPUT_DIR_OPTION.getOpt()), "output directory is not specified");
             Path ordersDir = Path.of(inputDir);
-            Map<String, OrdersFindService> ordersFindServiceMap = MapBuilder.of(
+            Map<String, OrdersFindService> ordersFindServiceMap = LinkedMapBuilder.of(
                     "Computers", new DirectoryOrdersFindService(ordersDir.resolve("Computers")),
                     "Furniture", new DirectoryOrdersFindService(ordersDir.resolve("Furniture")),
                     "Tools Software Books", new DirectoryOrdersFindService(ordersDir.resolve("Tools Software Books")),
@@ -70,7 +70,7 @@ public class Main {
             new Main(ordersFindServiceMap, orderParser, reportGenerator).run();
             logger.info("Reports saved to: {}", outputDir);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error("FATAL ERROR", e);
         }
     }
 
