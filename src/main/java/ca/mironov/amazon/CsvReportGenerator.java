@@ -25,12 +25,12 @@ public class CsvReportGenerator implements ReportGenerator {
             // print headers
             csvPrinter.printRecord("Date", "Order #",
                     "Items subtotal with discount", "Shipping & handling", "Environmental handling fee", "Total before tax", "HST", "Total", "Items");
-            BigDecimal totalItemsSubtotalWithDiscount = BigDecimal.ZERO;
-            BigDecimal totalShippingAndHandling = BigDecimal.ZERO;
-            BigDecimal totalEnvironmentalHandlingFee = BigDecimal.ZERO;
-            BigDecimal totalTotalBeforeTax = BigDecimal.ZERO;
-            BigDecimal totalHst = BigDecimal.ZERO;
-            BigDecimal totalTotal = BigDecimal.ZERO;
+            BigDecimal totalItemsSubtotalWithDiscount = Order.FINANCIAL_ZERO;
+            BigDecimal totalShippingAndHandling = Order.FINANCIAL_ZERO;
+            BigDecimal totalEnvironmentalHandlingFee = Order.FINANCIAL_ZERO;
+            BigDecimal totalTotalBeforeTax = Order.FINANCIAL_ZERO;
+            BigDecimal totalHst = Order.FINANCIAL_ZERO;
+            BigDecimal totalTotal = Order.FINANCIAL_ZERO;
             for (Order order : orders) {
                 csvPrinter.printRecord(order.getDate(), order.getId(),
                         order.getItemsSubtotal().subtract(order.getDiscount()), order.getShippingAndHandling(), order.getEnvironmentalHandlingFee(),

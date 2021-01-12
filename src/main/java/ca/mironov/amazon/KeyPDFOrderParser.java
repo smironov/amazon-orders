@@ -20,8 +20,6 @@ public class KeyPDFOrderParser implements OrderParser {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyPDFOrderParser.class);
 
-    private static final BigDecimal FINANCIAL_ZERO = new BigDecimal("0.00");
-
     @Override
     public Order parse(Path file) throws IOException {
         logger.debug("parsing file: {}", file);
@@ -77,17 +75,17 @@ public class KeyPDFOrderParser implements OrderParser {
         BigDecimal shippingAndHandling = multimap.get("Shipping & Handling").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal yourCouponSavings = multimap.get("Your Coupon Savings").stream().map(BigDecimal::new)
-                .max(Comparator.naturalOrder()).orElse(FINANCIAL_ZERO);
+                .max(Comparator.naturalOrder()).orElse(Order.FINANCIAL_ZERO);
         BigDecimal lightningDeal = multimap.get("Lightning Deal").stream().map(BigDecimal::new)
-                .max(Comparator.naturalOrder()).orElse(FINANCIAL_ZERO);
-        BigDecimal promotionApplied = findOnlyElement(multimap.get("Promotion Applied")).map(BigDecimal::new).orElse(FINANCIAL_ZERO);
+                .max(Comparator.naturalOrder()).orElse(Order.FINANCIAL_ZERO);
+        BigDecimal promotionApplied = findOnlyElement(multimap.get("Promotion Applied")).map(BigDecimal::new).orElse(Order.FINANCIAL_ZERO);
         BigDecimal discount = yourCouponSavings.add(lightningDeal).add(promotionApplied);
-        BigDecimal environmentalHandlingFee = findOnlyElement(multimap.get("Environmental Handling Fee")).map(BigDecimal::new).orElse(FINANCIAL_ZERO);
+        BigDecimal environmentalHandlingFee = findOnlyElement(multimap.get("Environmental Handling Fee")).map(BigDecimal::new).orElse(Order.FINANCIAL_ZERO);
         Optional<BigDecimal> freeShipping1 = findOnlyElement(multimap.get("Free Shipping")).map(BigDecimal::new);
         Optional<BigDecimal> freeShipping2 = findOnlyElement(multimap.get("FREE Shipping")).map(BigDecimal::new);
         Optional<BigDecimal> freeShipping = freeShipping1.map(fs1 -> freeShipping2.map(fs1::add).orElse(fs1)).or(() -> freeShipping2);
         if (freeShipping.isPresent() && (shippingAndHandling.compareTo(freeShipping.get()) == 0)) {
-            shippingAndHandling = FINANCIAL_ZERO;
+            shippingAndHandling = Order.FINANCIAL_ZERO;
         }
         BigDecimal totalBeforeTax = multimap.get("Total before tax").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();

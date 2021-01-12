@@ -12,6 +12,8 @@ class Order {
 
     private static final Logger logger = LoggerFactory.getLogger(Order.class);
 
+    static final BigDecimal FINANCIAL_ZERO = new BigDecimal("0.00");
+
     private final @NotNull String id;
     private final @NotNull LocalDate date;
     private final @NotNull BigDecimal itemsSubtotal;
