@@ -27,7 +27,7 @@ public final class Main {
         this.reportGenerator = reportGenerator;
     }
 
-    private void run() throws IOException {
+    private void run() {
         for (Map.Entry<String, OrdersFindService> entry : ordersFindServiceMap.entrySet()) {
             String name = entry.getKey();
             OrdersFindService ordersFindService = entry.getValue();
