@@ -1,4 +1,4 @@
-package ca.mironov.amazon;
+package ca.mironov.amazon.util;
 
 import com.google.common.collect.Iterables;
 

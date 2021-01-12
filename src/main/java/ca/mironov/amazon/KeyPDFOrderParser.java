@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
-import static ca.mironov.amazon.ListUtils.findOnlyElement;
+import static ca.mironov.amazon.util.ListUtils.findOnlyElement;
 
 public class KeyPDFOrderParser implements OrderParser {
 
