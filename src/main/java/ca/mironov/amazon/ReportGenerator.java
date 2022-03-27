@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface ReportGenerator {
 
-    void generate(String reportName, List<? extends Order> orders);
+    void generate(String reportName, List<Order> orders);
 
 }

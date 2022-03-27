@@ -24,12 +24,11 @@ public class KeyPDFOrderParser implements OrderParser {
     public Order parse(Path file) throws IOException {
         logger.debug("parsing file: {}", file);
         try (InputStream in = Files.newInputStream(file)) {
+            //noinspection NestedTryStatement
             try (PDDocument document = PDDocument.load(in)) {
-                if (document.isEncrypted()) {
+                if (document.isEncrypted())
                     throw new IllegalArgumentException("document is encrypted: " + file);
-                }
-                PDFTextStripper stripper = new PDFTextStripper();
-                String text = stripper.getText(document);
+                String text = new PDFTextStripper().getText(document);
                 return parseText(text);
             }
         }
@@ -84,9 +83,8 @@ public class KeyPDFOrderParser implements OrderParser {
         Optional<BigDecimal> freeShipping1 = findOnlyElement(multimap.get("Free Shipping")).map(BigDecimal::new);
         Optional<BigDecimal> freeShipping2 = findOnlyElement(multimap.get("FREE Shipping")).map(BigDecimal::new);
         Optional<BigDecimal> freeShipping = freeShipping1.map(fs1 -> freeShipping2.map(fs1::add).orElse(fs1)).or(() -> freeShipping2);
-        if (freeShipping.isPresent() && (shippingAndHandling.compareTo(freeShipping.get()) == 0)) {
+        if (freeShipping.isPresent() && (shippingAndHandling.compareTo(freeShipping.get()) == 0))
             shippingAndHandling = Order.FINANCIAL_ZERO;
-        }
         BigDecimal totalBeforeTax = multimap.get("Total before tax").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal hst = multimap.get("Estimated GST/HST").stream().map(BigDecimal::new)
@@ -94,9 +92,8 @@ public class KeyPDFOrderParser implements OrderParser {
         BigDecimal total = multimap.get("Grand Total").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow(() -> new IllegalArgumentException("Grand Total not present"));
         Optional<BigDecimal> giftCardAmount = findOnlyElement(new HashSet<>(multimap.get("Gift Card Amount"))).map(BigDecimal::new);
-        if (giftCardAmount.isPresent()) {
+        if (giftCardAmount.isPresent())
             total = total.add(giftCardAmount.get());
-        }
         String items = lines.stream()
                 .filter(line -> line.contains(" of: "))
                 .map(line -> line.startsWith("1 of: ") ? line.substring("1 of: ".length()) : line)

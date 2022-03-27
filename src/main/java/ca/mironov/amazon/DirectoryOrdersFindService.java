@@ -15,12 +15,12 @@ public class DirectoryOrdersFindService implements OrdersFindService {
 
     @Override
     public List<Path> findOrderFiles() {
-            try (Stream<Path> list = Files.list(directory).filter(Files::isRegularFile)) {
-                return list.map(DirectoryOrdersFindService::validatePDFExtension).sorted().collect(Collectors.toList());
-            } catch (IOException e) {
-                //noinspection ProhibitedExceptionThrown
-                throw new RuntimeException(e);
-            }
+        try (Stream<Path> list = Files.list(directory).filter(Files::isRegularFile)) {
+            return list.map(DirectoryOrdersFindService::validatePDFExtension).sorted().toList();
+        } catch (IOException e) {
+            //noinspection ProhibitedExceptionThrown
+            throw new RuntimeException(e);
+        }
     }
 
     private static Path validatePDFExtension(Path file) {

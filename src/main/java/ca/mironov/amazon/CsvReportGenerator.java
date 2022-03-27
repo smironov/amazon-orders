@@ -16,10 +16,10 @@ public class CsvReportGenerator implements ReportGenerator {
     }
 
     @Override
-    public void generate(String reportName, List<? extends Order> orders) {
+    public void generate(String reportName, List<Order> orders) {
         try {
-            Files.createDirectories(directory);
-            Path reportFile = directory.resolve(reportName + ".csv");
+            Path reportFile = Files.createDirectories(directory).resolve(reportName + ".csv");
+            //noinspection NestedTryStatement
             try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(reportFile), CSVFormat.EXCEL)) {
                 // print headers
                 csvPrinter.printRecord("Date", "Order #",
@@ -31,15 +31,15 @@ public class CsvReportGenerator implements ReportGenerator {
                 BigDecimal totalHst = Order.FINANCIAL_ZERO;
                 BigDecimal totalTotal = Order.FINANCIAL_ZERO;
                 for (Order order : orders) {
-                    csvPrinter.printRecord(order.getDate(), order.getId(),
-                            order.getItemsSubtotal().subtract(order.getDiscount()), order.getShippingAndHandling(), order.getEnvironmentalHandlingFee(),
-                            order.getTotalBeforeTax(), order.getHst(), order.getTotal(), order.getItems());
-                    totalItemsSubtotalWithDiscount = totalItemsSubtotalWithDiscount.add(order.getItemsSubtotal()).subtract(order.getDiscount());
-                    totalShippingAndHandling = totalShippingAndHandling.add(order.getShippingAndHandling());
-                    totalEnvironmentalHandlingFee = totalEnvironmentalHandlingFee.add(order.getEnvironmentalHandlingFee());
-                    totalTotalBeforeTax = totalTotalBeforeTax.add(order.getTotalBeforeTax());
-                    totalHst = totalHst.add(order.getHst());
-                    totalTotal = totalTotal.add(order.getTotal());
+                    csvPrinter.printRecord(order.date(), order.id(),
+                            order.itemsSubtotal().subtract(order.discount()), order.shippingAndHandling(), order.environmentalHandlingFee(),
+                            order.totalBeforeTax(), order.hst(), order.total(), order.items());
+                    totalItemsSubtotalWithDiscount = totalItemsSubtotalWithDiscount.add(order.itemsSubtotal()).subtract(order.discount());
+                    totalShippingAndHandling = totalShippingAndHandling.add(order.shippingAndHandling());
+                    totalEnvironmentalHandlingFee = totalEnvironmentalHandlingFee.add(order.environmentalHandlingFee());
+                    totalTotalBeforeTax = totalTotalBeforeTax.add(order.totalBeforeTax());
+                    totalHst = totalHst.add(order.hst());
+                    totalTotal = totalTotal.add(order.total());
                 }
                 // print total
                 csvPrinter.printRecord();

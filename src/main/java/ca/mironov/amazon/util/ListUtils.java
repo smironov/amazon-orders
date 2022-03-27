@@ -10,7 +10,7 @@ public final class ListUtils {
     private ListUtils() {
     }
 
-    public static <E> Optional<E> findOnlyElement(Iterable<E> collection) {
+    public static <E> Optional<E> findOnlyElement(Iterable<? extends E> collection) {
         return Optional.ofNullable(Iterables.getOnlyElement(collection, null));
     }
 
