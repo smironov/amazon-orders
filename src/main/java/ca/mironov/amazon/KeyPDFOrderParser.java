@@ -46,6 +46,7 @@ public class KeyPDFOrderParser implements OrderParser {
             Pattern.compile("(?<k>Promotion Applied):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Free Shipping):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>FREE Shipping):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Import Fees Deposit):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Estimated GST/HST):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Gift Card Amount):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Grand Total):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})(?:Canada)?"), // Canada for workaround
@@ -87,6 +88,8 @@ public class KeyPDFOrderParser implements OrderParser {
             shippingAndHandling = Order.FINANCIAL_ZERO;
         BigDecimal totalBeforeTax = multimap.get("Total before tax").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
+        BigDecimal importFeesDeposit = multimap.get("Import Fees Deposit").stream().map(BigDecimal::new)
+                .max(Comparator.naturalOrder()).orElse(Order.FINANCIAL_ZERO);
         BigDecimal hst = multimap.get("Estimated GST/HST").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal total = multimap.get("Grand Total").stream().map(BigDecimal::new)
@@ -98,7 +101,7 @@ public class KeyPDFOrderParser implements OrderParser {
                 .filter(line -> line.contains(" of: "))
                 .map(line -> line.startsWith("1 of: ") ? line.substring("1 of: ".length()) : line)
                 .collect(Collectors.joining("; "));
-        return new Order(id, date, itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, hst, total, items);
+        return new Order(id, date, itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, importFeesDeposit, hst, total, items);
     }
 
 }
