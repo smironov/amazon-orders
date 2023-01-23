@@ -26,7 +26,8 @@ public final class Main {
         this.reportGenerator = reportGenerator;
     }
 
-    private void run() {
+    private int run() {
+        int ordersTotal = 0;
         for (Map.Entry<String, OrdersFindService> entry : ordersFindServiceMap.entrySet()) {
             String name = entry.getKey();
             OrdersFindService ordersFindService = entry.getValue();
@@ -42,7 +43,9 @@ public final class Main {
                     .collect(Collectors.toList());
             reportGenerator.generate(name, orders);
             logger.info("{}: saved {} orders", name, orders.size());
+            ordersTotal += orders.size();
         }
+        return ordersTotal;
     }
 
     public static void main(String[] args) {
@@ -58,16 +61,17 @@ public final class Main {
             String outputDir = Objects.requireNonNull(
                     commandLine.getOptionValue(OUTPUT_DIR_OPTION.getOpt()), "output directory is not specified");
             Path ordersDir = Path.of(inputDir);
-            Map<String, OrdersFindService> ordersFindServiceMap = new LinkedHashMap<>();
-            ordersFindServiceMap.put("Computers", new DirectoryOrdersFindService(ordersDir.resolve("Computers")));
-//            ordersFindServiceMap.put("Furniture", new DirectoryOrdersFindService(ordersDir.resolve("Furniture")));
-            ordersFindServiceMap.put("Tools Software Books", new DirectoryOrdersFindService(ordersDir.resolve("Tools Software Books")));
-            ordersFindServiceMap.put("Supplies", new DirectoryOrdersFindService(ordersDir.resolve("Supplies")));
+            Map<String, OrdersFindService> ordersFindServiceMap = Map.of(
+                    "Computers", new DirectoryOrdersFindService(ordersDir.resolve("Computers")),
+//                "Furniture", new DirectoryOrdersFindService(ordersDir.resolve("Furniture")),
+                    "Tools Software Books", new DirectoryOrdersFindService(ordersDir.resolve("Tools Software Books")),
+                    "Supplies", new DirectoryOrdersFindService(ordersDir.resolve("Supplies")),
+                    "Power", new DirectoryOrdersFindService(ordersDir.resolve("Power"))
+            );
 
-            OrderParser orderParser = new KeyPDFOrderParser();
             ReportGenerator reportGenerator = new CsvReportGenerator(Path.of(outputDir));
-            new Main(ordersFindServiceMap, orderParser, reportGenerator).run();
-            logger.info("Reports saved to: {}", outputDir);
+            int ordersTotal = new Main(ordersFindServiceMap, new KeyPDFOrderParser(), reportGenerator).run();
+            logger.info("Reports saved to {}, {} orders", outputDir, ordersTotal);
         } catch (Exception e) {
             logger.error("FATAL ERROR", e);
         }
