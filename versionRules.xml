@@ -5,7 +5,7 @@
     <rules>
         <rule groupId="org.apache.pdfbox" artifactId="pdfbox">
             <ignoreVersions>
-                <ignoreVersion type="regex">3\.0\.0-(alpha|RC)\d+</ignoreVersion>
+                <ignoreVersion type="regex">3\.0\.\d+(-(alpha|beta|RC)\d+)?</ignoreVersion>
             </ignoreVersions>
         </rule>
     </rules>
