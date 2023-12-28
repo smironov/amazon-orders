@@ -23,6 +23,7 @@ public class KeyPDFOrderParserTest {
                 new BigDecimal("0.00"),
                 new BigDecimal("0.00"),
                 new BigDecimal("56.19"),
+                new BigDecimal("0.00"),
                 new BigDecimal("2.81"),
                 new BigDecimal("59.00"),
                 "The Choice, Goldratt, Eliyahu M; The Haystack Syndrome: Sifting Information Out of the Data Ocean, Goldratt,"
