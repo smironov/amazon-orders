@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +42,7 @@ final class Main {
             OrdersFindService ordersFindService = entry.getValue();
             List<Order> orders = ordersFindService.findOrderFiles().stream()
                     .map(file -> rethrow(() -> orderParser.parse(file)))
+                    .sorted(Comparator.comparing(Order::date))
                     .toList();
             reportGenerator.generate(name, orders);
             logger.info("{}: saved {} orders", name, orders.size());
