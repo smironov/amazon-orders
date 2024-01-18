@@ -1,20 +1,27 @@
 package ca.mironov.amazon;
 
-import com.google.common.collect.*;
+import ca.mironov.amazon.util.Multimap;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.format.*;
-import java.util.*;
-import java.util.regex.*;
-import java.util.stream.*;
-
-import static ca.mironov.amazon.util.ListUtils.findOnlyElement;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class KeyPDFOrderParser implements OrderParser {
 
@@ -57,7 +64,7 @@ class KeyPDFOrderParser implements OrderParser {
         SortedSet<String> lines = Stream.of(text.split("\r\n"))
                 .filter(line -> !line.isBlank())
                 .sorted().collect(Collectors.toCollection(TreeSet::new));
-        Multimap<String, String> multimap = LinkedListMultimap.create();
+        Multimap<String, String> multimap = new Multimap<>();
         lines.stream().filter(line -> line.contains("Grand")).forEach(logger::trace);
         lines.forEach(line -> Stream.of(PATTERNS)
                 .map(pattern -> pattern.matcher(line))
@@ -65,8 +72,8 @@ class KeyPDFOrderParser implements OrderParser {
                 .forEach(matcher ->
                         multimap.put(matcher.group("k"), matcher.group("v"))));
         logger.trace("multimap: {}", multimap);
-        String id = Iterables.getOnlyElement(multimap.get("Amazon.ca order number"));
-        LocalDate date = LocalDate.parse(Iterables.getOnlyElement(multimap.get("Order Placed")), DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG));
+        String id = multimap.getOnlyElement("Amazon.ca order number");
+        LocalDate date = LocalDate.parse(multimap.getOnlyElement("Order Placed"), DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG));
         BigDecimal itemsSubtotal = multimap.get("Item(s) Subtotal").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder())
                 .orElseThrow(() -> new IllegalArgumentException("\"Item(s) Subtotal\" not found in: " + multimap.keySet()));
@@ -76,11 +83,11 @@ class KeyPDFOrderParser implements OrderParser {
                 .max(Comparator.naturalOrder()).orElse(Order.FINANCIAL_ZERO);
         BigDecimal lightningDeal = multimap.get("Lightning Deal").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElse(Order.FINANCIAL_ZERO);
-        BigDecimal promotionApplied = findOnlyElement(multimap.get("Promotion Applied")).map(BigDecimal::new).orElse(Order.FINANCIAL_ZERO);
+        BigDecimal promotionApplied = multimap.findOnlyElement("Promotion Applied").map(BigDecimal::new).orElse(Order.FINANCIAL_ZERO);
         BigDecimal discount = yourCouponSavings.add(lightningDeal).add(promotionApplied);
-        BigDecimal environmentalHandlingFee = findOnlyElement(multimap.get("Environmental Handling Fee")).map(BigDecimal::new).orElse(Order.FINANCIAL_ZERO);
-        Optional<BigDecimal> freeShipping1 = findOnlyElement(multimap.get("Free Shipping")).map(BigDecimal::new);
-        Optional<BigDecimal> freeShipping2 = findOnlyElement(multimap.get("FREE Shipping")).map(BigDecimal::new);
+        BigDecimal environmentalHandlingFee = multimap.findOnlyElement("Environmental Handling Fee").map(BigDecimal::new).orElse(Order.FINANCIAL_ZERO);
+        Optional<BigDecimal> freeShipping1 = multimap.findOnlyElement("Free Shipping").map(BigDecimal::new);
+        Optional<BigDecimal> freeShipping2 = multimap.findOnlyElement("FREE Shipping").map(BigDecimal::new);
         Optional<BigDecimal> freeShipping = freeShipping1.map(fs1 -> freeShipping2.map(fs1::add).orElse(fs1)).or(() -> freeShipping2);
         if (freeShipping.isPresent() && (shippingAndHandling.compareTo(freeShipping.get()) == 0))
             shippingAndHandling = Order.FINANCIAL_ZERO;
@@ -92,7 +99,7 @@ class KeyPDFOrderParser implements OrderParser {
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal total = multimap.get("Grand Total").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow(() -> new IllegalArgumentException("Grand Total not present"));
-        Optional<BigDecimal> giftCardAmount = findOnlyElement(new HashSet<>(multimap.get("Gift Card Amount"))).map(BigDecimal::new);
+        Optional<BigDecimal> giftCardAmount = multimap.findOnlyElement("Gift Card Amount").map(BigDecimal::new);
         if (giftCardAmount.isPresent())
             total = total.add(giftCardAmount.get());
         String items = lines.stream()
