@@ -28,7 +28,7 @@ class KeyPDFOrderParser implements OrderParser {
     private static final Logger logger = LoggerFactory.getLogger(KeyPDFOrderParser.class);
 
     @Override
-    public Order parse(Path file) throws IOException {
+    public Order parse(Path file) {
         logger.debug("parsing file: {}", file);
         try (InputStream in = Files.newInputStream(file)) {
             //noinspection NestedTryStatement
@@ -38,6 +38,9 @@ class KeyPDFOrderParser implements OrderParser {
                 String text = new PDFTextStripper().getText(document);
                 return parseText(text);
             }
+        } catch (IOException e) {
+            //noinspection ProhibitedExceptionThrown
+            throw new RuntimeException(e);
         }
     }
 

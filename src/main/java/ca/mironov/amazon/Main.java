@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static ca.mironov.amazon.util.LambdaUtils.rethrow;
-
 final class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -41,7 +39,7 @@ final class Main {
             String name = entry.getKey();
             OrdersFindService ordersFindService = entry.getValue();
             List<Order> orders = ordersFindService.findOrderFiles().stream()
-                    .map(file -> rethrow(() -> orderParser.parse(file)))
+                    .map(orderParser::parse)
                     .sorted(Comparator.comparing(Order::date))
                     .toList();
             reportGenerator.generate(name, orders);

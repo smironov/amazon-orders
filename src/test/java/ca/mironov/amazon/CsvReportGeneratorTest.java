@@ -1,12 +1,16 @@
 package ca.mironov.amazon;
 
-import ca.mironov.amazon.util.LambdaUtils;
-import org.junit.*;
-import org.slf4j.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.*;
-import java.time.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -42,7 +46,14 @@ public class CsvReportGeneratorTest {
     @After
     public void tearDown() throws Exception {
         try (Stream<Path> files = Files.list(tempDirectory)) {
-            files.forEach(path -> LambdaUtils.rethrow(() -> Files.delete(path)));
+            files.forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    //noinspection ProhibitedExceptionThrown
+                    throw new RuntimeException(e);
+                }
+            });
         }
         Files.delete(tempDirectory);
         LoggerFactory.getLogger(CsvReportGeneratorTest.class).debug("Deleted generated files");
