@@ -1,9 +1,10 @@
 package ca.mironov.amazon;
 
+import java.io.IOException;
 import java.util.List;
 
-public interface ReportGenerator {
+interface ReportGenerator {
 
-    void generate(String reportName, List<Order> orders);
+    void generate(String reportName, List<Order> orders) throws IOException;
 
 }

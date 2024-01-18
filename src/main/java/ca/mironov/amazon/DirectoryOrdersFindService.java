@@ -5,7 +5,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class DirectoryOrdersFindService implements OrdersFindService {
+class DirectoryOrdersFindService implements OrdersFindService {
 
     private final Path directory;
 
@@ -14,12 +14,9 @@ public class DirectoryOrdersFindService implements OrdersFindService {
     }
 
     @Override
-    public List<Path> findOrderFiles() {
+    public List<Path> findOrderFiles() throws IOException {
         try (Stream<Path> list = Files.list(directory).filter(Files::isRegularFile)) {
             return list.map(DirectoryOrdersFindService::validatePDFExtension).sorted().toList();
-        } catch (IOException e) {
-            //noinspection ProhibitedExceptionThrown
-            throw new RuntimeException(e);
         }
     }
 

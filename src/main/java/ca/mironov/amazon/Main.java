@@ -1,14 +1,22 @@
 package ca.mironov.amazon;
 
-import org.apache.commons.cli.*;
-import org.slf4j.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public final class Main {
+import static ca.mironov.amazon.util.LambdaUtils.rethrow;
+
+final class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
@@ -26,21 +34,14 @@ public final class Main {
         this.reportGenerator = reportGenerator;
     }
 
-    private int run() {
+    private int run() throws IOException {
         int ordersTotal = 0;
         for (Map.Entry<String, OrdersFindService> entry : ordersFindServiceMap.entrySet()) {
             String name = entry.getKey();
             OrdersFindService ordersFindService = entry.getValue();
             List<Order> orders = ordersFindService.findOrderFiles().stream()
-                    .map(file -> {
-                        try {
-                            return orderParser.parse(file);
-                        } catch (IOException e) {
-                            //noinspection ProhibitedExceptionThrown
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .collect(Collectors.toList());
+                    .map(file -> rethrow(() -> orderParser.parse(file)))
+                    .toList();
             reportGenerator.generate(name, orders);
             logger.info("{}: saved {} orders", name, orders.size());
             ordersTotal += orders.size();
@@ -65,8 +66,8 @@ public final class Main {
                     "Computers", new DirectoryOrdersFindService(ordersDir.resolve("Computers")),
 //                "Furniture", new DirectoryOrdersFindService(ordersDir.resolve("Furniture")),
                     "Tools Software Books", new DirectoryOrdersFindService(ordersDir.resolve("Tools Software Books")),
-                    "Supplies", new DirectoryOrdersFindService(ordersDir.resolve("Supplies")),
-                    "Power", new DirectoryOrdersFindService(ordersDir.resolve("Power"))
+                    "Supplies", new DirectoryOrdersFindService(ordersDir.resolve("Supplies"))
+//                    "Power", new DirectoryOrdersFindService(ordersDir.resolve("Power"))
             );
 
             ReportGenerator reportGenerator = new CsvReportGenerator(Path.of(outputDir));

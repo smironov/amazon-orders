@@ -16,7 +16,7 @@ import java.util.stream.*;
 
 import static ca.mironov.amazon.util.ListUtils.findOnlyElement;
 
-public class KeyPDFOrderParser implements OrderParser {
+class KeyPDFOrderParser implements OrderParser {
 
     private static final Logger logger = LoggerFactory.getLogger(KeyPDFOrderParser.class);
 
@@ -37,19 +37,19 @@ public class KeyPDFOrderParser implements OrderParser {
     private static final Pattern[] PATTERNS = {
             Pattern.compile("(?<k>Amazon.ca order number): (?<v>\\d+-\\d+-\\d+)"),
             Pattern.compile("(?<k>Order Placed): (?<v>[A-Z][a-z]+ \\d+, \\d{4})"),
-            Pattern.compile("(?<k>Item\\(s\\) Subtotal):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Total before tax):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Shipping & Handling):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Your Coupon Savings):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Lightning Deal):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Environmental Handling Fee) \\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Promotion Applied):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Free Shipping):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>FREE Shipping):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Import Fees Deposit):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Estimated GST/HST):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Gift Card Amount):\\s?-CDN\\$ (?<v>\\d+\\.\\d{2})"),
-            Pattern.compile("(?<k>Grand Total):\\s?CDN\\$ (?<v>\\d+\\.\\d{2})(?:Canada)?"), // Canada for workaround
+            Pattern.compile("(?<k>Item\\(s\\) Subtotal):\\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Total before tax):\\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Shipping & Handling):\\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Your Coupon Savings):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Lightning Deal):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Environmental Handling Fee) \\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Promotion Applied):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Free Shipping):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>FREE Shipping):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Import Fees Deposit):\\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Estimated GST/HST):\\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Gift Card Amount):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Grand Total):\\s?\\$(?<v>\\d+\\.\\d{2})(?:Canada)?"), // Canada for workaround
     };
 
     private static Order parseText(String text) {
@@ -62,16 +62,14 @@ public class KeyPDFOrderParser implements OrderParser {
         lines.forEach(line -> Stream.of(PATTERNS)
                 .map(pattern -> pattern.matcher(line))
                 .filter(Matcher::matches)
-                .forEach(matcher -> {
-                    String key = matcher.group("k");
-                    String value = matcher.group("v");
-                    multimap.put(key, value);
-                }));
+                .forEach(matcher ->
+                        multimap.put(matcher.group("k"), matcher.group("v"))));
         logger.trace("multimap: {}", multimap);
         String id = Iterables.getOnlyElement(multimap.get("Amazon.ca order number"));
         LocalDate date = LocalDate.parse(Iterables.getOnlyElement(multimap.get("Order Placed")), DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG));
         BigDecimal itemsSubtotal = multimap.get("Item(s) Subtotal").stream().map(BigDecimal::new)
-                .max(Comparator.naturalOrder()).orElseThrow();
+                .max(Comparator.naturalOrder())
+                .orElseThrow(() -> new IllegalArgumentException("\"Item(s) Subtotal\" not found in: " + multimap.keySet()));
         BigDecimal shippingAndHandling = multimap.get("Shipping & Handling").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal yourCouponSavings = multimap.get("Your Coupon Savings").stream().map(BigDecimal::new)
@@ -101,7 +99,8 @@ public class KeyPDFOrderParser implements OrderParser {
                 .filter(line -> line.contains(" of: "))
                 .map(line -> line.startsWith("1 of: ") ? line.substring("1 of: ".length()) : line)
                 .collect(Collectors.joining("; "));
-        return new Order(id, date, itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, importFeesDeposit, hst, total, items);
+        return new Order(
+                id, date, itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, importFeesDeposit, hst, total, items);
     }
 
 }
