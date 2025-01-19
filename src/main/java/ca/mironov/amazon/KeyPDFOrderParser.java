@@ -23,20 +23,17 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class KeyPDFOrderParser implements OrderParser {
+class KeyPDFOrderParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(KeyPDFOrderParser.class);
-
-    @Override
-    public Order parse(Path file) {
-        logger.debug("parsing file: {}", file);
+    Order parse(String category, Path file) {
+        log.debug("parsing file: {}", file);
         try (InputStream in = Files.newInputStream(file)) {
             //noinspection NestedTryStatement
             try (PDDocument document = PDDocument.load(in)) {
                 if (document.isEncrypted())
                     throw new IllegalArgumentException("document is encrypted: " + file);
                 String text = new PDFTextStripper().getText(document);
-                return parseText(text);
+                return parseText(category, text);
             }
         } catch (IOException e) {
             //noinspection ProhibitedExceptionThrown
@@ -58,23 +55,24 @@ class KeyPDFOrderParser implements OrderParser {
             Pattern.compile("(?<k>FREE Shipping):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Import Fees Deposit):\\s?\\$(?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Estimated GST/HST):\\s?\\$(?<v>\\d+\\.\\d{2})"),
+            Pattern.compile("(?<k>Estimated PST/RST/QST):\\s?\\$(?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Gift Card Amount):\\s?-\\$(?<v>\\d+\\.\\d{2})"),
             Pattern.compile("(?<k>Grand Total):\\s?\\$(?<v>\\d+\\.\\d{2})(?:Canada)?"), // Canada for workaround
     };
 
-    private static Order parseText(String text) {
+    private static Order parseText(String category, String text) {
         //noinspection DynamicRegexReplaceableByCompiledPattern,HardcodedLineSeparator
         SortedSet<String> lines = Stream.of(text.split("\r\n"))
                 .filter(line -> !line.isBlank())
                 .sorted().collect(Collectors.toCollection(TreeSet::new));
         Multimap<String, String> multimap = new Multimap<>();
-        lines.stream().filter(line -> line.contains("Grand")).forEach(logger::trace);
+        lines.stream().filter(line -> line.contains("Grand")).forEach(log::trace);
         lines.forEach(line -> Stream.of(PATTERNS)
                 .map(pattern -> pattern.matcher(line))
                 .filter(Matcher::matches)
                 .forEach(matcher ->
                         multimap.put(matcher.group("k"), matcher.group("v"))));
-        logger.trace("multimap: {}", multimap);
+        log.trace("multimap: {}", multimap);
         String id = multimap.getOnlyElement("Amazon.ca order number");
         LocalDate date = LocalDate.parse(multimap.getOnlyElement("Order Placed"), DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG));
         BigDecimal itemsSubtotal = multimap.get("Item(s) Subtotal").stream().map(BigDecimal::new)
@@ -100,6 +98,8 @@ class KeyPDFOrderParser implements OrderParser {
                 .max(Comparator.naturalOrder()).orElse(Order.FINANCIAL_ZERO);
         BigDecimal hst = multimap.get("Estimated GST/HST").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow();
+        BigDecimal qst = multimap.get("Estimated PST/RST/QST").stream().map(BigDecimal::new)
+                .max(Comparator.naturalOrder()).orElseThrow();
         BigDecimal total = multimap.get("Grand Total").stream().map(BigDecimal::new)
                 .max(Comparator.naturalOrder()).orElseThrow(() -> new IllegalArgumentException("Grand Total not present"));
         Optional<BigDecimal> giftCardAmount = multimap.findOnlyElement("Gift Card Amount").map(BigDecimal::new);
@@ -109,8 +109,10 @@ class KeyPDFOrderParser implements OrderParser {
                 .filter(line -> line.contains(" of: "))
                 .map(line -> line.startsWith("1 of: ") ? line.substring("1 of: ".length()) : line)
                 .collect(Collectors.joining("; "));
-        return new Order(
-                id, date, itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, importFeesDeposit, hst, total, items);
+        return new Order(category, id, date,
+                itemsSubtotal, shippingAndHandling, discount, environmentalHandlingFee, totalBeforeTax, importFeesDeposit, hst, qst, total, items);
     }
+
+    private static final Logger log = LoggerFactory.getLogger(KeyPDFOrderParser.class);
 
 }

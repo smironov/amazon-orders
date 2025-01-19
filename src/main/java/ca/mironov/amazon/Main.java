@@ -1,7 +1,6 @@
 package ca.mironov.amazon;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -12,38 +11,33 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 final class Main {
 
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
-
     private static final Option INPUT_DIR_OPTION = new Option("i", "input-dir", true, "Input directory");
     private static final Option OUTPUT_DIR_OPTION = new Option("o", "output-dir", true, "Output directory");
 
-    private final Map<String, OrdersFindService> ordersFindServiceMap;
-    private final OrderParser orderParser;
+    private final DirectoryOrdersFindService ordersFindService;
+    private final KeyPDFOrderParser orderParser;
     private final ReportGenerator reportGenerator;
 
-    private Main(Map<String, OrdersFindService> ordersFindServiceMap, OrderParser orderParser,
-                 ReportGenerator reportGenerator) {
-        this.ordersFindServiceMap = ordersFindServiceMap;
+    private Main(DirectoryOrdersFindService ordersFindService, KeyPDFOrderParser orderParser, ReportGenerator reportGenerator) {
+        this.ordersFindService = ordersFindService;
         this.orderParser = orderParser;
         this.reportGenerator = reportGenerator;
     }
 
-    private int run() throws IOException {
+    private int run(String... categories) throws IOException {
         int ordersTotal = 0;
-        for (Map.Entry<String, OrdersFindService> entry : ordersFindServiceMap.entrySet()) {
-            String name = entry.getKey();
-            OrdersFindService ordersFindService = entry.getValue();
-            List<Order> orders = ordersFindService.findOrderFiles().stream()
-                    .map(orderParser::parse)
+        for (String category : categories) {
+            List<Order> orders = ordersFindService.findOrderFiles(category)
+                    .stream()
+                    .map(file -> orderParser.parse(category, file))
                     .sorted(Comparator.comparing(Order::date))
                     .toList();
-            reportGenerator.generate(name, orders);
-            logger.info("{}: saved {} orders", name, orders.size());
+            reportGenerator.generate(category, orders);
+            log.info("{}: saved {} orders", category, orders.size());
             ordersTotal += orders.size();
         }
         return ordersTotal;
@@ -52,30 +46,23 @@ final class Main {
     public static void main(String[] args) {
         //noinspection OverlyBroadCatchBlock
         try {
-            CommandLineParser commandLineParser = new DefaultParser();
             Options options = new Options();
             options.addOption(INPUT_DIR_OPTION);
             options.addOption(OUTPUT_DIR_OPTION);
-            CommandLine commandLine = commandLineParser.parse(options, args);
-            String inputDir = Objects.requireNonNull(
-                    commandLine.getOptionValue(INPUT_DIR_OPTION.getOpt()), "input directory is not specified");
-            String outputDir = Objects.requireNonNull(
-                    commandLine.getOptionValue(OUTPUT_DIR_OPTION.getOpt()), "output directory is not specified");
-            Path ordersDir = Path.of(inputDir);
-            Map<String, OrdersFindService> ordersFindServiceMap = Map.of(
-                    "Computers", new DirectoryOrdersFindService(ordersDir.resolve("Computers")),
-//                "Furniture", new DirectoryOrdersFindService(ordersDir.resolve("Furniture")),
-                    "Tools Software Books", new DirectoryOrdersFindService(ordersDir.resolve("Tools Software Books")),
-                    "Supplies", new DirectoryOrdersFindService(ordersDir.resolve("Supplies"))
-//                    "Power", new DirectoryOrdersFindService(ordersDir.resolve("Power"))
-            );
+            CommandLine commandLine = new DefaultParser().parse(options, args);
+            String inputDir = Objects.requireNonNull(commandLine.getOptionValue(INPUT_DIR_OPTION.getOpt()), "input directory is not specified");
+            String outputDir = Objects.requireNonNull(commandLine.getOptionValue(OUTPUT_DIR_OPTION.getOpt()), "output directory is not specified");
 
+            DirectoryOrdersFindService ordersFindService = new DirectoryOrdersFindService(Path.of(inputDir));
             ReportGenerator reportGenerator = new CsvReportGenerator(Path.of(outputDir));
-            int ordersTotal = new Main(ordersFindServiceMap, new KeyPDFOrderParser(), reportGenerator).run();
-            logger.info("Reports saved to {}, {} orders", outputDir, ordersTotal);
+            int ordersTotal = new Main(ordersFindService, new KeyPDFOrderParser(), reportGenerator)
+                    .run("Computers", /*"Furniture", */"Tools Software Books", "Supplies");
+            log.info("Reports saved to {}, {} orders", outputDir, ordersTotal);
         } catch (Exception e) {
-            logger.error("FATAL ERROR", e);
+            log.error("FATAL ERROR", e);
         }
     }
+
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
 }

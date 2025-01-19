@@ -1,10 +1,12 @@
 package ca.mironov.amazon;
 
-import org.apache.commons.csv.*;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 class CsvReportGenerator implements ReportGenerator {
@@ -27,24 +29,25 @@ class CsvReportGenerator implements ReportGenerator {
             BigDecimal totalShippingAndHandling = Order.FINANCIAL_ZERO;
             BigDecimal totalEnvironmentalHandlingFee = Order.FINANCIAL_ZERO;
             BigDecimal totalTotalBeforeTax = Order.FINANCIAL_ZERO;
-            BigDecimal totalHst = Order.FINANCIAL_ZERO;
+            BigDecimal totalTax = Order.FINANCIAL_ZERO;
             BigDecimal totalTotal = Order.FINANCIAL_ZERO;
             for (Order order : orders) {
+                BigDecimal combinedTax = order.hst().add(order.qst());
                 csvPrinter.printRecord(order.date(), order.id(),
                         order.itemsSubtotal().subtract(order.discount()), order.shippingAndHandling(), order.environmentalHandlingFee(),
-                        order.totalBeforeTax(), order.hst(), order.total(), order.items());
+                        order.totalBeforeTax(), combinedTax, order.total(), order.items());
                 totalItemsSubtotalWithDiscount = totalItemsSubtotalWithDiscount.add(order.itemsSubtotal()).subtract(order.discount());
                 totalShippingAndHandling = totalShippingAndHandling.add(order.shippingAndHandling());
                 totalEnvironmentalHandlingFee = totalEnvironmentalHandlingFee.add(order.environmentalHandlingFee());
                 totalTotalBeforeTax = totalTotalBeforeTax.add(order.totalBeforeTax());
-                totalHst = totalHst.add(order.hst());
+                totalTax = totalTax.add(combinedTax);
                 totalTotal = totalTotal.add(order.total());
             }
             // print total
             csvPrinter.printRecord();
             csvPrinter.printRecord(
                     null, "Total:", totalItemsSubtotalWithDiscount, totalShippingAndHandling, totalEnvironmentalHandlingFee,
-                    totalTotalBeforeTax, totalHst, totalTotal
+                    totalTotalBeforeTax, totalTax, totalTotal
             );
         }
     }

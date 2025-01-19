@@ -1,11 +1,13 @@
 package ca.mironov.amazon;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 
-class DirectoryOrdersFindService implements OrdersFindService {
+class DirectoryOrdersFindService {
 
     private final Path directory;
 
@@ -13,10 +15,13 @@ class DirectoryOrdersFindService implements OrdersFindService {
         this.directory = directory;
     }
 
-    @Override
-    public List<Path> findOrderFiles() throws IOException {
-        try (Stream<Path> list = Files.list(directory).filter(Files::isRegularFile)) {
-            return list.map(DirectoryOrdersFindService::validatePDFExtension).sorted().toList();
+    List<Path> findOrderFiles(String category) throws IOException {
+        try (Stream<Path> list = Files.list(directory.resolve(category))) {
+            return list
+                    .filter(Files::isRegularFile)
+                    .map(DirectoryOrdersFindService::validatePDFExtension)
+                    .sorted()
+                    .toList();
         }
     }
 

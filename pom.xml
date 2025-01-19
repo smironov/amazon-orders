@@ -16,31 +16,31 @@
         <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
-            <version>1.6.0</version>
+            <version>1.9.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
-            <version>2.0.30</version>
+            <version>2.0.33</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.10.0</version>
+            <version>1.13.0</version>
         </dependency>
 
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.14</version>
+            <version>1.5.16</version>
         </dependency>
 
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>24.1.0</version>
+            <version>26.0.1</version>
         </dependency>
 
         <dependency>
@@ -56,16 +56,15 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.12.1</version>
+                <version>3.13.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -86,7 +85,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.16.2</version>
+                <version>2.18.0</version>
                 <configuration>
                     <rulesUri>file:///${project.basedir}/versionRules.xml</rulesUri>
                 </configuration>
@@ -96,7 +95,7 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>9.0.9</version>
+                <version>12.0.0</version>
                 <configuration>
                     <failBuildOnCVSS>0</failBuildOnCVSS>
                     <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>

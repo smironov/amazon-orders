@@ -30,9 +30,9 @@ public class CsvReportGeneratorTest {
     public void test() throws Exception {
         ReportGenerator reportGenerator = new CsvReportGenerator(tempDirectory);
         reportGenerator.generate("junit", List.of(
-                new Order("101", LocalDate.of(2020, Month.DECEMBER, 31),
-                        new BigDecimal("123.01"), new BigDecimal("3.99"), new BigDecimal("2.00"), new BigDecimal("0.00"), new BigDecimal("125.00"), new BigDecimal("0.00"), new BigDecimal("15.99"), new BigDecimal("140.99"), "Item 1 long description"),
-                new Order("102", LocalDate.of(2020, Month.JANUARY, 12), new BigDecimal("100.00"), new BigDecimal("0.00"), new BigDecimal("0.00"), new BigDecimal("0.00"), new BigDecimal("100.00"), new BigDecimal("0.00"), new BigDecimal("13.00"), new BigDecimal("113.00"), "Item 2")
+                new Order("junit", "101", LocalDate.of(2020, Month.DECEMBER, 31),
+                        new BigDecimal("123.01"), new BigDecimal("3.99"), new BigDecimal("2.00"), new BigDecimal("0.00"), new BigDecimal("125.00"), new BigDecimal("0.00"), new BigDecimal("15.99"), new BigDecimal("0.00"), new BigDecimal("140.99"), "Item 1 long description"),
+                new Order("junit", "102", LocalDate.of(2020, Month.JANUARY, 12), new BigDecimal("100.00"), new BigDecimal("0.00"), new BigDecimal("0.00"), new BigDecimal("0.00"), new BigDecimal("100.00"), new BigDecimal("0.00"), new BigDecimal("5.00"), new BigDecimal("8.00"), new BigDecimal("113.00"), "Item 2")
         ));
         assertThat(Files.readAllLines(tempDirectory.resolve("junit.csv")), is(List.of(
                 "Date,Order #,Items subtotal with discount,Shipping & handling,Environmental handling fee,Total before tax,HST,Total,Items",
